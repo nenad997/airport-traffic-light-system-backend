@@ -43,6 +43,7 @@ module.exports = buildSchema(`#graphql
   type RootMutation {
     createUser(input: UserInput): User
     createFlight(input: FlightInput!): Flight!
+    deleteFlight(flightId: String!): Flight!
   }
 
   schema {

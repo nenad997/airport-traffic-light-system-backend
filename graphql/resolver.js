@@ -81,4 +81,16 @@ module.exports = {
       };
     });
   },
+  deleteFlight: async ({ flightId }, req) => {
+    const foundFlight = await Flight.findOne({ _id: flightId });
+
+    if(!foundFlight) {
+      const error = new Error("You are trying to delete a flight that does not exist");
+      error.code = 204;
+      throw error;
+    }
+
+    const deletionResult = await Flight.deleteOne({ _id: flightId });
+    return deletionResult;
+  }
 };
