@@ -20,8 +20,33 @@ app.use(
     schema,
     rootValue: resolver,
     graphiql: true,
+    customFormatErrorFn: (err) => {
+      if (!err.originalError) {
+        return err;
+      }
+      const data = err.originalError.data;
+      const message = err.message || "An Error Occured!";
+      const statusCode = err.originalError.code || 500;
+      return {
+        message,
+        statusCode,
+        data,
+      };
+    },
   })
 );
+
+app.use((error, req, res, next) => {
+  if (!error) {
+    return next();
+  }
+  console.log(error);
+  const statusCode = error.code || 500;
+  res.status(statusCode).json({
+    message: error.message,
+    data: error.data || null,
+  });
+});
 
 mongoose
   .connect(MONGODB_URI)
