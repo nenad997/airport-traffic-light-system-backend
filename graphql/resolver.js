@@ -1,6 +1,9 @@
 const validator = require("validator");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 const Flight = require("../models/Flight");
+const User = require("../models/User");
 
 module.exports = {
   createFlight: async ({ input }, req) => {
@@ -176,6 +179,80 @@ module.exports = {
       _id: flightResult._id.toString(),
       createdAt: flightResult.createdAt.toISOString(),
       updatedAt: flightResult.updatedAt.toISOString(),
+    };
+  },
+  createUser: async ({ input }, req) => {
+    const { email, username, password } = input;
+    const foundUser = await User.findOne({ email });
+
+    if (foundUser) {
+      const error = new Error("User with this email already exists!");
+      error.code = 409;
+      throw error;
+    }
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    const newUser = new User({
+      email,
+      username,
+      password: hashedPassword,
+    });
+
+    const userResult = await newUser.save();
+
+    return {
+      ...userResult._doc,
+      _id: userResult._id.toString(),
+    };
+  },
+  login: async ({ input }, req) => {
+    const { email, password } = input;
+
+    const errors = [];
+
+    if (validator.isEmpty(email)) {
+      errors.push({ message: "Invalid input" });
+    }
+
+    if (validator.isEmpty(password)) {
+      errors.push({ message: "Invalid input" });
+    }
+
+    if (errors.length > 0) {
+      const error = new Error("Invalid input");
+      error.code = 422;
+      error.data = errors;
+      throw error;
+    }
+
+    const foundUser = await User.findOne({ email });
+
+    if (!foundUser) {
+      const error = new Error("User with this email does not exist!");
+      error.code = 400;
+      throw error;
+    }
+
+    const doPasswordsMatch = await bcrypt.compare(password, foundUser.password);
+
+    if (!doPasswordsMatch) {
+      const error = new Error("Incorrect password!");
+      error.code = 401;
+      throw error;
+    }
+
+    const token = jwt.sign(
+      {
+        email,
+        userId: foundUser._id,
+      },
+      "somesecretkey",
+      { expiresIn: "5h" }
+    );
+    return {
+      ...foundUser._doc,
+      _id: foundUser._id.toString(),
+      token,
     };
   },
 };
