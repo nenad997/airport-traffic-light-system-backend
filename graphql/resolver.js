@@ -95,4 +95,87 @@ module.exports = {
     const deletionResult = await Flight.deleteOne({ _id: flightId });
     return deletionResult;
   },
+  getFlight: async ({ flightId }, req) => {
+    const foundFlight = await Flight.findOne({ _id: flightId });
+
+    if (!foundFlight) {
+      const error = new Error("Could not find a flight");
+      error.code = 404;
+      throw error;
+    }
+
+    return {
+      ...foundFlight._doc,
+      _id: foundFlight._id.toString(),
+      createdAt: foundFlight.createdAt.toISOString(),
+      updatedAt: foundFlight.updatedAt.toISOString(),
+    };
+  },
+  updateFlight: async ({ flightId, input }, req) => {
+    const {
+      airport,
+      flightNumber,
+      scheduleTime,
+      avioCompany,
+      terminal,
+      status,
+      type,
+    } = input;
+
+    const foundFlight = await Flight.findOne({ _id: flightId });
+
+    if (!foundFlight) {
+      const error = new Error("Could not find a flight");
+      error.code = 404;
+      throw error;
+    }
+
+    const errors = [];
+
+    if (validator.isEmpty(airport)) {
+      errors.push({ message: "Invalid Input" });
+    }
+    if (validator.isEmpty(flightNumber)) {
+      errors.push({ message: "Invalid Input" });
+    }
+    if (validator.isEmpty(scheduleTime)) {
+      errors.push({ message: "Invalid Input" });
+    }
+    if (validator.isEmpty(avioCompany)) {
+      errors.push({ message: "Invalid Input" });
+    }
+    if (validator.isEmpty(terminal)) {
+      errors.push({ message: "Invalid Input" });
+    }
+    if (validator.isEmpty(status)) {
+      errors.push({ message: "Invalid Input" });
+    }
+    if (validator.isEmpty(type)) {
+      errors.push({ message: "Invalid Input" });
+    }
+
+    if (errors.length > 0) {
+      const error = new Error("Invalid input");
+      error.data = errors;
+      error.code = 422;
+      throw error;
+    }
+
+    foundFlight.airport = airport;
+    foundFlight.flightNumber = flightNumber;
+    foundFlight.scheduleTime = scheduleTime;
+    foundFlight.avioCompany = avioCompany;
+    foundFlight.terminal = terminal;
+    foundFlight.status = status;
+    foundFlight.type = type;
+
+    const flightResult = await foundFlight.save();
+
+    return {
+      ...flightResult._doc,
+      _id: flightResult._id.toString(),
+      createdAt: flightResult.createdAt.toISOString(),
+      updatedAt: flightResult.updatedAt.toISOString(),
+    };
+  },
 };
