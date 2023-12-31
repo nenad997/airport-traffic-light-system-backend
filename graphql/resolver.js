@@ -7,6 +7,12 @@ const User = require("../models/User");
 
 module.exports = {
   createFlight: async ({ input }, req) => {
+    if(!req.isAuth) {
+      const error = new Error("Not Authorized!");
+      error.code = 401;
+      throw error;
+    }
+
     const {
       airport,
       flightNumber,
@@ -85,6 +91,12 @@ module.exports = {
     });
   },
   deleteFlight: async ({ flightId }, req) => {
+    if(!req.isAuth) {
+      const error = new Error("Not Authorized!");
+      error.code = 401;
+      throw error;
+    }
+
     const foundFlight = await Flight.findOne({ _id: flightId });
 
     if (!foundFlight) {
@@ -115,6 +127,12 @@ module.exports = {
     };
   },
   updateFlight: async ({ flightId, input }, req) => {
+    if(!req.isAuth) {
+      const error = new Error("Not Authorized!");
+      error.code = 401;
+      throw error;
+    }
+
     const {
       airport,
       flightNumber,

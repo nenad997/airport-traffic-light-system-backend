@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 
 const { MONGODB_URI } = require("./constants");
 
+const { auth } = require("./middlewares/auth");
 const schema = require("./graphql/schema");
 const resolver = require("./graphql/resolver");
 
@@ -13,6 +14,8 @@ const app = express();
 
 app.use(cors());
 app.use(bodyParser.json());
+
+app.use(auth);
 
 app.use(
   "/graphql",
