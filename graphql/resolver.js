@@ -7,7 +7,7 @@ const User = require("../models/User");
 
 module.exports = {
   createFlight: async ({ input }, req) => {
-    if(!req.isAuth) {
+    if (!req.isAuth) {
       const error = new Error("Not Authorized!");
       error.code = 401;
       throw error;
@@ -91,7 +91,7 @@ module.exports = {
     });
   },
   deleteFlight: async ({ flightId }, req) => {
-    if(!req.isAuth) {
+    if (!req.isAuth) {
       const error = new Error("Not Authorized!");
       error.code = 401;
       throw error;
@@ -127,7 +127,7 @@ module.exports = {
     };
   },
   updateFlight: async ({ flightId, input }, req) => {
-    if(!req.isAuth) {
+    if (!req.isAuth) {
       const error = new Error("Not Authorized!");
       error.code = 401;
       throw error;
@@ -229,7 +229,7 @@ module.exports = {
     const errors = [];
 
     if (validator.isEmpty(email)) {
-      errors.push({ message: "Invalid input" });
+      errors.push({ message: "Invalid Email" });
     }
 
     if (validator.isEmpty(password)) {
