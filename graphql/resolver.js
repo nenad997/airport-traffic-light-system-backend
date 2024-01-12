@@ -199,30 +199,6 @@ module.exports = {
       updatedAt: flightResult.updatedAt.toISOString(),
     };
   },
-  createUser: async ({ input }, req) => {
-    const { email, username, password } = input;
-    const foundUser = await User.findOne({ email });
-
-    if (foundUser) {
-      const error = new Error("User with this email already exists!");
-      error.code = 409;
-      throw error;
-    }
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    const newUser = new User({
-      email,
-      username,
-      password: hashedPassword,
-    });
-
-    const userResult = await newUser.save();
-
-    return {
-      ...userResult._doc,
-      _id: userResult._id.toString(),
-    };
-  },
   login: async ({ input }, req) => {
     const { email, password } = input;
 
@@ -271,6 +247,83 @@ module.exports = {
       ...foundUser._doc,
       _id: foundUser._id.toString(),
       token,
+    };
+  },
+  signUp: async ({ input }, req) => {
+    const { email, username, password, repeatPassword, employeeId } = input;
+
+    const errors = [];
+
+    if (!validator.isEmail(email)) {
+      errors.push({
+        message: "Please enter a valid email address",
+        pathway: "email",
+      });
+    }
+
+    if (validator.isEmpty(email)) {
+      errors.push({ message: "Invalid input", pathway: "email" });
+    }
+
+    if (validator.isEmpty(password)) {
+      errors.push({ message: "Invalid input", pathway: "password" });
+    }
+
+    if (!validator.isAlphanumeric(password)) {
+      errors.push({
+        message: "Password must contain both numbers and letters",
+        pathway: "password",
+      });
+    }
+
+    if (!validator.isLength(password, { min: 6, max: 15 })) {
+      errors.push({
+        message: "Password must be between 6 and 15 characters long",
+        pathway: "password",
+      });
+    }
+
+    if (!validator.equals(password, repeatPassword)) {
+      errors.push({ message: "Passwords do not match", pathway: "password" });
+    }
+
+    if (!validator.equals(employeeId, "ABC123")) {
+      errors.push({
+        message: "Entered ID does not exist",
+        pathway: "employeeId",
+      });
+    }
+
+    const foundUser = await User.findOne({ email });
+
+    if (foundUser) {
+      errors.push({
+        message:
+          "User with this email already exists, please pick another email",
+        pathway: "email",
+      });
+    }
+
+    if (errors.length > 0) {
+      const error = new Error("Validation Failed!");
+      error.code = 400;
+      error.data = errors;
+      throw error;
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    const newUser = new User({
+      email,
+      password: hashedPassword,
+      username,
+    });
+
+    const userResult = await newUser.save();
+
+    return {
+      ...userResult._doc,
+      _id: userResult._id.toString(),
     };
   },
 };
