@@ -7,6 +7,7 @@ module.exports = buildSchema(`#graphql
     username: String
     password: String,
     token: String,
+    flights: [String]
   }
 
   input FlightInput {
@@ -37,19 +38,19 @@ module.exports = buildSchema(`#graphql
     password: String
   }
 
-  type RootQuery {
-    getUser(id: ID): User
-    getFlights: [Flight]!
-    getFlight(flightId: String!): Flight!
-    login(input: LoginInput): User!
-  }
-
   input UserInput {
     email: String
     username: String
     password: String
     repeatPassword: String
     employeeId: String
+  }
+
+  type RootQuery {
+    getUser(id: ID): User
+    getFlights: [Flight]!
+    getFlight(flightId: String!): Flight!
+    login(input: LoginInput): User
   }
 
   type RootMutation {

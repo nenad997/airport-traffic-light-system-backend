@@ -13,6 +13,15 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  flights: {
+    type: [
+      {
+        type: Object,
+        ref: "Flight",
+      },
+    ],
+    required: true,
+  },
 });
 
 module.exports = mongoose.model("User", userSchema);

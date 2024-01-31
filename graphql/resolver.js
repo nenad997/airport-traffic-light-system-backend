@@ -23,6 +23,8 @@ module.exports = {
       type,
     } = input;
 
+    const loggedInUser = await User.findOne({ _id: req.userId });
+
     const errors = [];
 
     if (validator.isEmpty(airport)) {
@@ -47,12 +49,17 @@ module.exports = {
       errors.push({ message: "Invalid Input" });
     }
 
+    if (!loggedInUser) {
+      errors.push({ message: "Not Authorized!" });
+    }
+
     if (errors.length > 0) {
       const error = new Error("Invalid input");
       error.data = errors;
       error.code = 422;
       throw error;
     }
+
     const flight = new Flight({
       airport,
       flightNumber,
@@ -61,7 +68,12 @@ module.exports = {
       terminal,
       status,
       type,
+      userId: loggedInUser._id,
     });
+
+    loggedInUser.flights.push(flight);
+
+    await loggedInUser.save();
 
     const flightResult = await flight.save();
 
@@ -96,8 +108,13 @@ module.exports = {
       error.code = 401;
       throw error;
     }
-
+    //Improve
+    const loggedInUser = await User.findOne({ _id: req.userId });
     const foundFlight = await Flight.findOne({ _id: flightId });
+
+    if (!loggedInUser) {
+      errors.push({ message: "Not Authorized!" });
+    }
 
     if (!foundFlight) {
       const error = new Error(
@@ -107,11 +124,16 @@ module.exports = {
       throw error;
     }
 
+    await loggedInUser.flights.pull(foundFlight);
+    await loggedInUser.save();
+
     const deletionResult = await Flight.deleteOne({ _id: flightId });
     return deletionResult;
   },
   getFlight: async ({ flightId }, req) => {
-    const foundFlight = await Flight.findOne({ _id: flightId });
+    const foundFlight = await Flight.findOne({ _id: flightId }).populate(
+      "userId"
+    );
 
     if (!foundFlight) {
       const error = new Error("Could not find a flight");
@@ -212,13 +234,6 @@ module.exports = {
       errors.push({ message: "Invalid input" });
     }
 
-    if (errors.length > 0) {
-      const error = new Error("Invalid input");
-      error.code = 422;
-      error.data = errors;
-      throw error;
-    }
-
     const foundUser = await User.findOne({ email });
 
     if (!foundUser) {
@@ -230,8 +245,16 @@ module.exports = {
     const doPasswordsMatch = await bcrypt.compare(password, foundUser.password);
 
     if (!doPasswordsMatch) {
-      const error = new Error("Incorrect password!");
-      error.code = 401;
+      // const error = new Error("Incorrect password!");
+      // error.code = 401;
+      // throw error;
+      errors.push({ message: "Incorrect password", code: 401 });
+    }
+
+    if (errors.length > 0) {
+      const error = new Error("Invalid input");
+      error.code = 422;
+      error.data = errors;
       throw error;
     }
 
@@ -317,6 +340,7 @@ module.exports = {
       email,
       password: hashedPassword,
       username,
+      flights: [],
     });
 
     const userResult = await newUser.save();
@@ -324,6 +348,9 @@ module.exports = {
     return {
       ...userResult._doc,
       _id: userResult._id.toString(),
+      flights: userResult.flights.map((flight) => {
+        return flight._id.toString();
+      }),
     };
   },
 };
