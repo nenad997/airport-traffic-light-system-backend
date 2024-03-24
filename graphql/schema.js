@@ -58,6 +58,7 @@ module.exports = buildSchema(`#graphql
     signUp(input: UserInput!): User
     deleteFlight(flightId: String!): Flight!
     updateFlight(flightId: String!, input: FlightInput!): Flight!
+    deleteUser(userId: String!): Boolean!
   }
 
   schema {

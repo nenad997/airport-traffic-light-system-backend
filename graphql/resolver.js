@@ -350,4 +350,18 @@ module.exports = {
       }),
     };
   },
+  deleteUser: async ({ userId }, req) => {
+    const foundUser = await User.findOne({ _id: userId });
+
+    if (!foundUser) {
+      throw new Error("You are trying to delete user that does not exist!");
+    }
+
+    await User.deleteOne({ _id: userId });
+    await Flight.deleteMany({ userId });
+    await foundUser.save();
+    await Flight.save();
+
+    return true;
+  },
 };
