@@ -108,7 +108,6 @@ module.exports = {
       error.code = 401;
       throw error;
     }
-    //Improve
     const loggedInUser = await User.findOne({ _id: req.userId });
     const foundFlight = await Flight.findOne({ _id: flightId });
 
@@ -123,8 +122,9 @@ module.exports = {
       error.code = 204;
       throw error;
     }
-
-    await loggedInUser.flights.pull(foundFlight);
+    loggedInUser.flights = loggedInUser.flights.filter(
+      (flight) => flight._id.toString() !== flightId.toString()
+    );
     await loggedInUser.save();
 
     const deletionResult = await Flight.deleteOne({ _id: flightId });
@@ -245,9 +245,6 @@ module.exports = {
     const doPasswordsMatch = await bcrypt.compare(password, foundUser.password);
 
     if (!doPasswordsMatch) {
-      // const error = new Error("Incorrect password!");
-      // error.code = 401;
-      // throw error;
       errors.push({ message: "Incorrect password", code: 401 });
     }
 
