@@ -68,7 +68,7 @@ module.exports = {
       terminal,
       status,
       type,
-      userId: loggedInUser._id,
+      creator: loggedInUser._id,
     });
 
     loggedInUser.flights.push(flight);
@@ -131,9 +131,7 @@ module.exports = {
     return deletionResult;
   },
   getFlight: async ({ flightId }, req) => {
-    const foundFlight = await Flight.findOne({ _id: flightId }).populate(
-      "userId"
-    );
+    const foundFlight = await Flight.findOne({ _id: flightId });
 
     if (!foundFlight) {
       const error = new Error("Could not find a flight");
@@ -357,11 +355,12 @@ module.exports = {
       throw new Error("You are trying to delete user that does not exist!");
     }
 
-    await User.deleteOne({ _id: userId });
-    await Flight.deleteMany({ userId });
-    await foundUser.save();
-    await Flight.save();
+    const deletionResult = await User.deleteOne({ _id: userId });
+    await Flight.deleteMany({ creator: userId });
 
-    return true;
+    return {
+      ...deletionResult._doc,
+      _id: deletionResult._id.toString(),
+    };
   },
 };
